@@ -29,6 +29,5 @@ foreach (var item in list1)
     }
 }
 
-Console.WriteLine(stopwatch.Elapsed);
 Console.WriteLine($"Result part 2: {resultPart2}");
 Console.ReadLine();
