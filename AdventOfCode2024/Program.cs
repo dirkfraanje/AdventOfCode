@@ -1,7 +1,51 @@
 ﻿using System.Diagnostics;
+using System.Numerics;
+using System.Text.RegularExpressions;
 
-Day1();
-Day2();
+//Day1();
+//Day2();
+Day3();
+
+void Day3()
+{
+    // Part 1
+    var input = File.ReadAllText(@"Inputs\Day3.txt");
+    var regexInstructions = new Regex("mul\\([0-9]+,[0-9]+\\)");
+    var regexInstruction = new Regex("([0-9]+),([0-9]+)");
+    var instructions = regexInstructions.Matches(input);
+    var resultPart1 = 0;
+    foreach (var instruction in instructions)
+    {
+        var instructionResult = regexInstruction.Matches(instruction.ToString());
+        resultPart1 += int.Parse(instructionResult[0].Groups[1].Value) * int.Parse(instructionResult[0].Groups[2].Value);
+    }
+
+    WriteResult(3, 1, $"{resultPart1}");
+    // Part 2
+    var instructions2Pattern = @"mul\([0-9]+,[0-9]+\)|do\(\)|don't\(\)";
+    var resultPart2 = 0;
+    var instructionsEnabled = true;
+    var matches = Regex.Matches(input, instructions2Pattern);
+    foreach (var item in matches)
+    {
+        switch (item.ToString())
+        {
+            case "don't()":
+                instructionsEnabled = false;
+                break;
+            case "do()":
+                instructionsEnabled = true;
+                break;
+            default:
+                if (!instructionsEnabled)
+                    continue;
+                var instructionResult = regexInstruction.Matches(item.ToString());
+                resultPart2 += int.Parse(instructionResult[0].Groups[1].Value) * int.Parse(instructionResult[0].Groups[2].Value);
+                break;
+        }
+    }
+    WriteResult(3, 2, $"{resultPart2}");
+}
 
 static void Day2()
 {
