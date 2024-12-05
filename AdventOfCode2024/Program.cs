@@ -1,11 +1,108 @@
-﻿using System.Diagnostics;
+﻿using AdventOfCode2024;
+using System.Diagnostics;
 using System.Numerics;
+using System.Text;
 using System.Text.RegularExpressions;
 
 //Day1();
 //Day2();
-Day3();
+//Day3();
+await Day4();
 
+async Task Day4()
+{
+    var stopWatch = new Stopwatch();
+    stopWatch.Start();
+    var normal = "\x1b[39m";
+    var green = "\x1b[92m";
+    var input = File.ReadAllLines(@"Inputs\Day4.txt");
+    var grid = new List<Coordinate>();
+    for (int y = 0; y < input.Length; y++)
+    {
+        var line = input[y];
+        var resultLine = new StringBuilder();
+
+        for (int x = 0; x < line.Length; x++)
+        {
+            var letter = line[x];
+            if (letter.Equals('X'))
+            {
+                grid.Add(new Coordinate(x, y, letter, green));
+                resultLine.Append($"{green}{letter}{normal}");
+            }
+
+            else
+            {
+                grid.Add(new Coordinate(x, y, letter, normal));
+                resultLine.Append($"{normal}{letter}{normal}");
+            }
+
+        }
+        //Console.WriteLine(resultLine.ToString());
+    }
+    var result = 0;
+    List<Task<int>> task = new List<Task<int>>();
+    foreach (var item in grid.Where(c => c.Value.Equals('X')))
+    {
+        task.Add(CheckXMASResults(grid, item));
+    }
+    var resultFromTask = await Task.WhenAll(task);
+    stopWatch.Stop();
+    WriteResult(4, 1, $"Time:{stopWatch.ElapsedMilliseconds} - Result: {resultFromTask.Sum()}");
+    
+}
+async Task<int> CheckXMASResults(List<Coordinate> grid, Coordinate item)
+{
+    var result = 0;
+    // Go to top
+    if (CheckForMas(grid, item.X, item.Y - 1, item.X, item.Y - 2, item.X, item.Y - 3))
+        result++;
+
+    // Go to diagonal top / right
+    if (CheckForMas(grid, item.X + 1, item.Y - 1, item.X + 2, item.Y - 2, item.X + 3, item.Y - 3))
+        result++;
+
+    // Go right
+    if (CheckForMas(grid, item.X + 1, item.Y, item.X + 2, item.Y, item.X + 3, item.Y))
+        result++;
+
+    // Go to diagonal right / bottom
+    if (CheckForMas(grid, item.X + 1, item.Y + 1, item.X + 2, item.Y + 2, item.X + 3, item.Y + 3))
+        result++;
+
+    // Go bottom
+    if (CheckForMas(grid, item.X, item.Y + 1, item.X, item.Y + 2, item.X, item.Y + 3))
+        result++;
+
+    // Go to diagonal bottom / left
+    if (CheckForMas(grid, item.X - 1, item.Y + 1, item.X - 2, item.Y + 2, item.X - 3, item.Y + 3))
+        result++;
+
+    // Go left
+    if (CheckForMas(grid, item.X - 1, item.Y, item.X - 2, item.Y, item.X - 3, item.Y))
+        result++;
+
+    // Go to diagonal left / top
+    if (CheckForMas(grid, item.X - 1, item.Y - 1, item.X - 2, item.Y - 2, item.X - 3, item.Y - 3))
+        result++;
+    return result;
+}
+
+bool CheckForMas(List<Coordinate> grid, int x1, int y1, int x2, int y2, int x3, int y3)
+{
+    var valueM = grid.FirstOrDefault(c => c.X == x1 && c.Y == y1);
+    if (valueM.Value != 'M')
+        return false;
+
+    var valueA = grid.FirstOrDefault(c => c.X == x2 && c.Y == y2);
+    if (valueA.Value != 'A')
+        return false;
+
+    var valueS = grid.FirstOrDefault(c => c.X == x3 && c.Y == y3);
+    if (valueS.Value != 'S')
+        return false;
+    return true;
+}
 void Day3()
 {
     // Part 1
