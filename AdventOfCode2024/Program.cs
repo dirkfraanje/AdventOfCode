@@ -11,8 +11,7 @@ await Day4();
 
 async Task Day4()
 {
-    var stopWatch = new Stopwatch();
-    stopWatch.Start();
+
     var normal = "\x1b[39m";
     var green = "\x1b[92m";
     var input = File.ReadAllLines(@"Inputs\Day4.txt");
@@ -40,17 +39,58 @@ async Task Day4()
         }
         //Console.WriteLine(resultLine.ToString());
     }
-    var result = 0;
-    List<Task<int>> task = new List<Task<int>>();
+
+    List<Task<int>> tasks1 = new List<Task<int>>();
     foreach (var item in grid.Where(c => c.Value.Equals('X')))
     {
-        task.Add(CheckXMASResults(grid, item));
+        tasks1.Add(CheckXMASResults(grid, item));
     }
-    var resultFromTask = await Task.WhenAll(task);
-    stopWatch.Stop();
-    WriteResult(4, 1, $"Time:{stopWatch.ElapsedMilliseconds} - Result: {resultFromTask.Sum()}");
-    
+    var resultFromTask1 = await Task.WhenAll(tasks1);
+    WriteResult(4, 1, $"{resultFromTask1.Sum()}");
+
+    // Part 2
+    List<Task<int>> tasks2 = new List<Task<int>>();
+    foreach (var item in grid.Where(c => c.Value.Equals('M') || c.Value.Equals('S')))
+    {
+        tasks2.Add(CheckForMASResults(grid, item));
+    }
+    var resultFromTasks2 = await Task.WhenAll(tasks2);
+    WriteResult(4, 2, $"{resultFromTasks2.Sum()}");
 }
+
+async Task<int> CheckForMASResults(List<Coordinate> grid, Coordinate item)
+{
+    // We always receive the top left starting point, either M or S
+    // From this starting point we are checking the diagonal right/bottom
+    // If this is M we check for A and S, otherwise for A and M
+    if (item.Value.Equals('M'))
+    {
+        if (!CheckForAS(grid, item.X + 1, item.Y + 1, item.X + 2, item.Y + 2))
+            return 0;
+    }
+    else
+    {
+        if (!CheckForAM(grid, item.X + 1, item.Y + 1, item.X + 2, item.Y + 2))
+            return 0;
+    }
+
+    // Next we check if the value on the X coordinate 2 position further is either M or S
+    var position2 = grid.FirstOrDefault(c => c.X == item.X + 2 && c.Y.Equals(item.Y));
+    if (!(position2.Value == 'M' || position2.Value == 'S'))
+        return 0;
+    if (position2.Value.Equals('M'))
+    {
+        if (!CheckForAS(grid, position2.X - 1, position2.Y + 1, position2.X - 2, position2.Y + 2))
+            return 0;
+    }
+    else
+    {
+        if (!CheckForAM(grid, position2.X - 1, position2.Y + 1, position2.X - 2, position2.Y + 2))
+            return 0;
+    }
+    return 1;
+}
+
 async Task<int> CheckXMASResults(List<Coordinate> grid, Coordinate item)
 {
     var result = 0;
@@ -101,6 +141,30 @@ bool CheckForMas(List<Coordinate> grid, int x1, int y1, int x2, int y2, int x3, 
     var valueS = grid.FirstOrDefault(c => c.X == x3 && c.Y == y3);
     if (valueS.Value != 'S')
         return false;
+    return true;
+}
+bool CheckForAM(List<Coordinate> grid, int x1, int y1, int x2, int y2)
+{
+    var valueM = grid.FirstOrDefault(c => c.X == x1 && c.Y == y1);
+    if (valueM.Value != 'A')
+        return false;
+
+    var valueA = grid.FirstOrDefault(c => c.X == x2 && c.Y == y2);
+    if (valueA.Value != 'M')
+        return false;
+
+    return true;
+}
+bool CheckForAS(List<Coordinate> grid, int x1, int y1, int x2, int y2)
+{
+    var valueM = grid.FirstOrDefault(c => c.X == x1 && c.Y == y1);
+    if (valueM.Value != 'A')
+        return false;
+
+    var valueA = grid.FirstOrDefault(c => c.X == x2 && c.Y == y2);
+    if (valueA.Value != 'S')
+        return false;
+
     return true;
 }
 void Day3()
