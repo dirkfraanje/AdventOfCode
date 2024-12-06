@@ -1,14 +1,130 @@
 ﻿using AdventOfCode2024;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.Numerics;
 using System.Text;
 using System.Text.RegularExpressions;
+using static System.Runtime.InteropServices.JavaScript.JSType;
 
 //Day1();
 //Day2();
 //Day3();
-await Day4();
+//await Day4();
+Day5();
 
+void Day5()
+{
+    var input = File.ReadAllLines(@"Inputs\Day5.txt");
+
+    var creatingOrderingRules = true;
+    List<(int First, int Second)> orderingRules = new();
+    List<string> succesRules = new List<string>();
+    List<string> faultRules = new List<string>();
+    foreach (var line in input)
+    {
+
+        if (string.IsNullOrWhiteSpace(line))
+            creatingOrderingRules = false;
+
+        if (creatingOrderingRules)
+        {
+            var numbers = line.Split('|');
+            orderingRules.Add((int.Parse(numbers[0]), int.Parse(numbers[1])));
+        }
+
+        if (!creatingOrderingRules && !string.IsNullOrEmpty(line))
+        {
+            if (UpdateSucces(line, orderingRules))
+                // If the loop get's here no faults have been found
+                succesRules.Add(line);
+            else
+                faultRules.Add(line);
+        }
+    }
+    var result = 0;
+    foreach (var line in succesRules)
+    {
+        var numbers = line.Split(',', StringSplitOptions.RemoveEmptyEntries).Select(n => int.Parse(n)).ToArray();
+        var middle = (numbers.Count() / 2);
+        result += numbers[middle];
+    }
+    WriteResult(5, 1, $"{result}");
+
+    var result2 = 0;
+    foreach (var line in faultRules)
+    {
+        int[] correctedList = CorrectList(line, orderingRules);
+        
+        var middle = (correctedList.Count() / 2);
+        result2 += correctedList[middle];
+    }
+
+    WriteResult(5, 2, $"{result2}");
+}
+
+int[] CorrectList(string line, List<(int First, int Second)> orderingRules)
+{
+    var faultOrderedList = line.Split(',', StringSplitOptions.RemoveEmptyEntries).Select(n => int.Parse(n)).ToList();
+
+    var rightOrderedList = new List<int>();
+    for (int i = 0; i < faultOrderedList.Count - 1; i++)
+    {
+        //Console.WriteLine($"i:{numbers[i]}");
+        var number = faultOrderedList[i];
+        for (int j = i + 1; j < faultOrderedList.Count(); j++)
+        {
+            //Console.WriteLine($"j:{numbers[j]}");
+            if (orderingRules.Any(r => r.First.Equals(faultOrderedList[j]) && r.Second.Equals(faultOrderedList[i])))
+            // Positions are not right, correct them, how? 
+            // it can be any position 10 20 30 40 if 10 and 20 are wrong we can just swap but if 10 and 40 are wrong
+            // what then? Try to move the first one one position and check all over
+            // other wise start moving the second one backwards 
+            // so if 10 and 40 are wrong start moving 10, so we get 20 10 30 40, if it's not rigth 20 30 10 40 then 20 30 40 10
+            // this can fail because perhaps 10 is als not allowed after 30
+            // then we start moving 40 back: 10 20 40 30 then 10 40 20 30 then 40 10 20 30
+            // The starting posisiton is i
+            {
+                var checklist = new List<int>();
+                for(int c = 0; c < faultOrderedList.Count; c++)
+                {
+                    // i is the value i'm currently checking and has a mismatch with y
+                    // if c is smaller then i it can be added
+                    if(c < i)
+                    {
+                        checklist.Add(faultOrderedList[c]);
+                        continue;
+                    }
+                    // I am now at the point where c is equal to i, get the next value from the list and put it in place of 
+                    checklist.Add(faultOrderedList[c + 1]);
+                    checklist.Add(faultOrderedList[c]);
+                    c++;
+                }
+                // reordered, now check
+            }
+            
+        }
+
+    }
+    return rightOrderedList.ToArray();
+}
+
+bool UpdateSucces(string line, List<(int First, int Second)> orderingRules)
+{
+    var numbers = line.Split(',', StringSplitOptions.RemoveEmptyEntries).Select(n => int.Parse(n)).ToArray();
+    for (int i = 0; i < numbers.Length - 1; i++)
+    {
+        //Console.WriteLine($"i:{numbers[i]}");
+        var number = numbers[i];
+        for (int j = i + 1; j < numbers.Length; j++)
+        {
+            //Console.WriteLine($"j:{numbers[j]}");
+            if (orderingRules.Any(r => r.First.Equals(numbers[j]) && r.Second.Equals(numbers[i])))
+                return false;
+        }
+
+    }
+    return true;
+}
 async Task Day4()
 {
 
