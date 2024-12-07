@@ -51,61 +51,101 @@ void Day5()
     WriteResult(5, 1, $"{result}");
 
     var result2 = 0;
-    foreach (var line in faultRules)
+    // The right order is 97 75 47 61 53 29 13 but in the real puzzle there can be conflicting rules
+    // So for each update the right order has to be found, only based on rules that contain values that are in the update
+    foreach (var faultRule in faultRules)
     {
-        int[] correctedList = CorrectList(line, orderingRules);
-        
-        var middle = (correctedList.Count() / 2);
-        result2 += correctedList[middle];
+        var faultedNumbers = faultRule.Split(',',StringSplitOptions.RemoveEmptyEntries).Select(x=>int.Parse(x));
+        List<(int First, int Second)> orderingRulesWithFaultValues = new List<(int,int)>();
+
+        foreach (var item in orderingRules)
+        {
+            if(faultedNumbers.Contains(item.First) && faultedNumbers.Contains(item.Second))
+                orderingRulesWithFaultValues.Add(item);
+        }
+
+        List<int> rightOrderedRuleValues = new();
+        foreach (var rule in orderingRulesWithFaultValues.ToArray())
+        {
+            // Set initial values
+            if (rightOrderedRuleValues.Count == 0)
+            {
+                rightOrderedRuleValues.Add(rule.First);
+                rightOrderedRuleValues.Add(rule.Second);
+                continue;
+            }
+            // Place first value
+            var valueToSet = rule.First;
+            var checkList = new List<int>(rightOrderedRuleValues);
+
+            var valid = false;
+            var index = 0;
+            while (!valid)
+            {
+                if (rightOrderedRuleValues.Contains(valueToSet))
+                    break;
+                if (index > checkList.Count)
+                    checkList.Add(index);
+                else
+                    checkList.Insert(index, valueToSet);
+                valid = UpdateSuccesCheck(checkList, orderingRules);
+                if (!valid)
+                {
+                    checkList.Remove(rule.First);
+                    index++;
+                }
+                else
+                    rightOrderedRuleValues.Insert(index, valueToSet);
+            }
+            valid = false;
+            index = 0;
+            valueToSet = rule.Second;
+            // Place second value
+            while (!valid)
+            {
+                if (rightOrderedRuleValues.Contains(valueToSet))
+                    break;
+                if (index > checkList.Count)
+                    checkList.Add(valueToSet);
+                else
+                    checkList.Insert(index, valueToSet);
+                valid = UpdateSuccesCheck(checkList, orderingRules);
+                if (!valid)
+                {
+                    checkList.Remove(rule.Second);
+                    index++;
+                }
+                else
+                    rightOrderedRuleValues.Insert(index, valueToSet);
+            }
+        }
+        //Console.WriteLine(faultRule);
+        //WriteResult(5, 2, $"{string.Join(',', rightOrderedRuleValues)}");
+        var middle = (rightOrderedRuleValues.Count() / 2);
+        result2 += rightOrderedRuleValues[middle];
     }
 
+
     WriteResult(5, 2, $"{result2}");
+
 }
 
-int[] CorrectList(string line, List<(int First, int Second)> orderingRules)
+bool UpdateSuccesCheck(List<int> numbers, List<(int First, int Second)> orderingRules)
 {
-    var faultOrderedList = line.Split(',', StringSplitOptions.RemoveEmptyEntries).Select(n => int.Parse(n)).ToList();
-
-    var rightOrderedList = new List<int>();
-    for (int i = 0; i < faultOrderedList.Count - 1; i++)
+    for (int i = 0; i < numbers.Count - 1; i++)
     {
         //Console.WriteLine($"i:{numbers[i]}");
-        var number = faultOrderedList[i];
-        for (int j = i + 1; j < faultOrderedList.Count(); j++)
+        var number = numbers[i];
+        for (int j = i + 1; j < numbers.Count; j++)
         {
             //Console.WriteLine($"j:{numbers[j]}");
-            if (orderingRules.Any(r => r.First.Equals(faultOrderedList[j]) && r.Second.Equals(faultOrderedList[i])))
-            // Positions are not right, correct them, how? 
-            // it can be any position 10 20 30 40 if 10 and 20 are wrong we can just swap but if 10 and 40 are wrong
-            // what then? Try to move the first one one position and check all over
-            // other wise start moving the second one backwards 
-            // so if 10 and 40 are wrong start moving 10, so we get 20 10 30 40, if it's not rigth 20 30 10 40 then 20 30 40 10
-            // this can fail because perhaps 10 is als not allowed after 30
-            // then we start moving 40 back: 10 20 40 30 then 10 40 20 30 then 40 10 20 30
-            // The starting posisiton is i
-            {
-                var checklist = new List<int>();
-                for(int c = 0; c < faultOrderedList.Count; c++)
-                {
-                    // i is the value i'm currently checking and has a mismatch with y
-                    // if c is smaller then i it can be added
-                    if(c < i)
-                    {
-                        checklist.Add(faultOrderedList[c]);
-                        continue;
-                    }
-                    // I am now at the point where c is equal to i, get the next value from the list and put it in place of 
-                    checklist.Add(faultOrderedList[c + 1]);
-                    checklist.Add(faultOrderedList[c]);
-                    c++;
-                }
-                // reordered, now check
-            }
-            
+            var orderingRuleFaulting = orderingRules.FirstOrDefault(r => r.First.Equals(numbers[j]) && r.Second.Equals(numbers[i]));
+            if (orderingRuleFaulting.First != 0)
+                return false;
         }
 
     }
-    return rightOrderedList.ToArray();
+    return true;
 }
 
 bool UpdateSucces(string line, List<(int First, int Second)> orderingRules)
