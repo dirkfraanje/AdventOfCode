@@ -1,6 +1,7 @@
 ﻿using AdventOfCode2024;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
+using System.IO.Pipes;
 using System.Numerics;
 using System.Text;
 using System.Text.RegularExpressions;
@@ -10,7 +11,235 @@ using static System.Runtime.InteropServices.JavaScript.JSType;
 //Day2();
 //Day3();
 //await Day4();
-Day5();
+//Day5();
+Day6();
+
+async void Day6()
+{
+    var input = File.ReadAllLines(@"Inputs\Day6.txt");
+
+    var startingMap = new List<Coordinate>();
+
+    for (int y = 0; y < input.Length; y++)
+    {
+        var line = input[y];
+        for (int x = 0; x < line.Length; x++)
+        {
+            startingMap.Add(new Coordinate(x, y, line[x]));
+        }
+    }
+    #region Part1
+    var mapPart1 = new List<Coordinate>(startingMap);
+    var currentLocation = mapPart1.First(c => c.Value.Equals('^') || c.Value.Equals('>') || c.Value.Equals('v') || c.Value.Equals('<'));
+    var currentDirection = currentLocation.Value.Equals('^') ? Direction.North :
+        currentLocation.Value.Equals('>') ? Direction.East :
+        currentLocation.Value.Equals('v') ? Direction.South :
+        Direction.West;
+    Coordinate nextLocation;
+    currentLocation.Visited = true;
+    var insideMap = true;
+    while (insideMap)
+    {
+
+        switch (currentDirection)
+        {
+            case Direction.North:
+                nextLocation = mapPart1.FirstOrDefault(c => c.X == currentLocation.X && c.Y == currentLocation.Y - 1);
+                if (nextLocation == null)
+                {
+                    insideMap = false;
+                    break;
+                }
+
+                if (nextLocation.Value.Equals('#'))
+                    currentDirection = Direction.East;
+                else
+                {
+                    nextLocation.Visited = true;
+                    currentLocation = nextLocation;
+                }
+                break;
+            case Direction.East:
+                nextLocation = mapPart1.FirstOrDefault(c => c.X == currentLocation.X + 1 && c.Y == currentLocation.Y);
+                if (nextLocation == null)
+                    if (nextLocation == null)
+                    {
+                        insideMap = false;
+                        break;
+                    }
+                if (nextLocation.Value.Equals('#'))
+                    currentDirection = Direction.South;
+                else
+                {
+                    nextLocation.Visited = true;
+                    currentLocation = nextLocation;
+                }
+                break;
+            case Direction.South:
+                nextLocation = mapPart1.FirstOrDefault(c => c.X == currentLocation.X && c.Y == currentLocation.Y + 1);
+                if (nextLocation == null)
+                    if (nextLocation == null)
+                    {
+                        insideMap = false;
+                        break;
+                    }
+                if (nextLocation.Value.Equals('#'))
+                    currentDirection = Direction.West;
+                else
+                {
+                    nextLocation.Visited = true;
+                    currentLocation = nextLocation;
+                }
+                break;
+            case Direction.West:
+                nextLocation = mapPart1.FirstOrDefault(c => c.X == currentLocation.X - 1 && c.Y == currentLocation.Y);
+                if (nextLocation == null)
+                    if (nextLocation == null)
+                    {
+                        insideMap = false;
+                        break;
+                    }
+                if (nextLocation.Value.Equals('#'))
+                    currentDirection = Direction.North;
+                else
+                {
+                    nextLocation.Visited = true;
+                    currentLocation = nextLocation;
+                }
+                break;
+            default:
+                break;
+        }
+    }
+    WriteResult(6, 1, $"{mapPart1.Count(x => x.Visited)}");
+    Console.WriteLine("Part 2 while take a while...");
+    #endregion
+
+    #region Part2
+    // For each coordinate with value . check if a loop is created if we set an obstruction here
+
+    var currentLocation2 = startingMap.First(c => c.Value.Equals('^') || c.Value.Equals('>') || c.Value.Equals('v') || c.Value.Equals('<'));
+    var currentDirection2 = currentLocation2.Value.Equals('^') ? Direction.North :
+        currentLocation.Value.Equals('>') ? Direction.East :
+        currentLocation.Value.Equals('v') ? Direction.South :
+        Direction.West;
+    var tasks = new List<Task<bool>>();
+    foreach (var item in startingMap.Where(x => x.Visited && x.Value.Equals('.')).ToArray())
+    {
+        tasks.Add(goingToLoopIfIAmObstructing(startingMap, item, currentLocation2, currentDirection2));
+
+    }
+    var resultList = await Task.WhenAll(tasks);
+    #endregion
+    WriteResult(6, 2, $"{resultList.Count(x => x)}");
+
+}
+
+async Task<bool> goingToLoopIfIAmObstructing(List<Coordinate> map, Coordinate iAmObstructing, Coordinate currentLocation, Direction currentDirection)
+{
+    // Let's keep a list of visited locations
+    Console.WriteLine($"Checking location x:{iAmObstructing.X} y:{iAmObstructing.Y} ");
+    Coordinate nextLocation;
+    var visitedLocations = new Dictionary<Coordinate, List<Direction>>();
+    var insideMap = true;
+    while (insideMap)
+    {
+
+        switch (currentDirection)
+        {
+            case Direction.North:
+                nextLocation = map.FirstOrDefault(c => c.X == currentLocation.X && c.Y == currentLocation.Y - 1);
+                if (nextLocation == null)
+                {
+                    // Even I am also obstructing the guard still get; out of the loop
+                    return false;
+                }
+                else
+                {
+                    if (CheckLooping(currentDirection, nextLocation, visitedLocations))
+                        return true;
+                }
+
+
+                if (nextLocation.Value.Equals('#') || nextLocation == iAmObstructing)
+                    currentDirection = Direction.East;
+                else
+                {
+                    nextLocation.Visited = true;
+                    currentLocation = nextLocation;
+                }
+                break;
+            case Direction.East:
+                nextLocation = map.FirstOrDefault(c => c.X == currentLocation.X + 1 && c.Y == currentLocation.Y);
+                if (nextLocation == null)
+                {
+                    // Even I am also obstructing the guard still get; out of the loop
+                    return false;
+                }
+                else
+                {
+                    if (CheckLooping(currentDirection, nextLocation, visitedLocations))
+                        return true;
+                }
+
+
+                if (nextLocation.Value.Equals('#') || nextLocation == iAmObstructing)
+                    currentDirection = Direction.South;
+                else
+                {
+                    nextLocation.Visited = true;
+                    currentLocation = nextLocation;
+                }
+                break;
+            case Direction.South:
+                // Find the next location
+                nextLocation = map.FirstOrDefault(c => c.X == currentLocation.X && c.Y == currentLocation.Y + 1);
+                // If there is no next location the guard get's of the map
+                if (nextLocation == null)
+                    return false;
+                // There is a next location
+                else
+                {
+                    if (CheckLooping(currentDirection, nextLocation, visitedLocations))
+                        return true;
+                }
+
+
+                if (nextLocation.Value.Equals('#') || nextLocation == iAmObstructing)
+                    currentDirection = Direction.West;
+                else
+                {
+                    nextLocation.Visited = true;
+                    currentLocation = nextLocation;
+                }
+                break;
+            case Direction.West:
+                // Find the next location
+                nextLocation = map.FirstOrDefault(c => c.X == currentLocation.X - 1 && c.Y == currentLocation.Y);
+                // If there is no next location the guard get's of the map
+                if (nextLocation == null)
+                    return false;
+                // There is a next location
+                else
+                {
+                    if (CheckLooping(currentDirection, nextLocation, visitedLocations))
+                        return true;
+                }
+
+                if (nextLocation.Value.Equals('#') || nextLocation == iAmObstructing)
+                    currentDirection = Direction.North;
+                else
+                {
+                    nextLocation.Visited = true;
+                    currentLocation = nextLocation;
+                }
+                break;
+            default:
+                break;
+        }
+    }
+    return false;
+}
 
 void Day5()
 {
@@ -55,12 +284,12 @@ void Day5()
     // So for each update the right order has to be found, only based on rules that contain values that are in the update
     foreach (var faultRule in faultRules)
     {
-        var faultedNumbers = faultRule.Split(',',StringSplitOptions.RemoveEmptyEntries).Select(x=>int.Parse(x));
-        List<(int First, int Second)> orderingRulesWithFaultValues = new List<(int,int)>();
+        var faultedNumbers = faultRule.Split(',', StringSplitOptions.RemoveEmptyEntries).Select(x => int.Parse(x));
+        List<(int First, int Second)> orderingRulesWithFaultValues = new List<(int, int)>();
 
         foreach (var item in orderingRules)
         {
-            if(faultedNumbers.Contains(item.First) && faultedNumbers.Contains(item.Second))
+            if (faultedNumbers.Contains(item.First) && faultedNumbers.Contains(item.Second))
                 orderingRulesWithFaultValues.Add(item);
         }
 
@@ -182,13 +411,13 @@ async Task Day4()
             var letter = line[x];
             if (letter.Equals('X'))
             {
-                grid.Add(new Coordinate(x, y, letter, green));
+                grid.Add(new Coordinate(x, y, letter));
                 resultLine.Append($"{green}{letter}{normal}");
             }
 
             else
             {
-                grid.Add(new Coordinate(x, y, letter, normal));
+                grid.Add(new Coordinate(x, y, letter));
                 resultLine.Append($"{normal}{letter}{normal}");
             }
 
@@ -464,4 +693,26 @@ static void WriteResult(int day, int part, string result)
     Console.WriteLine($"Result day {day}, part {part}: {result}");
     Console.WriteLine("Press enter to continue");
     Console.ReadLine();
+}
+
+bool CheckLooping(Direction currentDirection, Coordinate nextLocation, Dictionary<Coordinate, List<Direction>> visitedLocations)
+{
+    // If this location already exists in the list of visited locations we have to check if it's looping
+    var exists = visitedLocations.TryGetValue(nextLocation, out var directions);
+    if (exists)
+    {
+        // If this location has been visited before from this direction we now it's looping
+        if (directions.Any(x => x == currentDirection))
+            return true;
+    }
+    // If it doesn't exist we add it to the visited locations
+    else
+    {
+        if (directions == null)
+            visitedLocations.Add(nextLocation, new List<Direction>() { currentDirection });
+        else
+            directions.Add(currentDirection);
+
+    }
+    return false;
 }
