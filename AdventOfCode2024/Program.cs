@@ -1,4 +1,5 @@
 ﻿using AdventOfCode2024;
+using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.IO.Pipes;
@@ -12,9 +13,12 @@ using static System.Runtime.InteropServices.JavaScript.JSType;
 //Day3();
 //await Day4();
 //Day5();
-Day6();
+await Day6();
+//Day7();
 
-async void Day6()
+
+
+async Task Day6()
 {
     var input = File.ReadAllLines(@"Inputs\Day6.txt");
 
@@ -123,13 +127,25 @@ async void Day6()
         currentLocation.Value.Equals('>') ? Direction.East :
         currentLocation.Value.Equals('v') ? Direction.South :
         Direction.West;
-    var tasks = new List<Task<bool>>();
-    foreach (var item in startingMap.Where(x => x.Visited && x.Value.Equals('.')).ToArray())
-    {
-        tasks.Add(goingToLoopIfIAmObstructing(startingMap, item, currentLocation2, currentDirection2));
 
-    }
-    var resultList = await Task.WhenAll(tasks);
+    var resultList = new ConcurrentBag<bool>(); // Thread-safe collection for results.
+
+    await Parallel.ForEachAsync(
+        startingMap.Where(x => x.Visited && x.Value.Equals('.')),
+        new ParallelOptions { MaxDegreeOfParallelism = Environment.ProcessorCount }, // Adjust concurrency if needed.
+        async (item, cancellationToken) =>
+        {
+            var result = await goingToLoopIfIAmObstructing(startingMap, item, currentLocation2, currentDirection2);
+            resultList.Add(result);
+        });
+
+    //var tasks = new List<Task<bool>>();
+    //foreach (var item in startingMap.Where(x => x.Visited && x.Value.Equals('.')).ToArray())
+    //{
+    //    tasks.Add(goingToLoopIfIAmObstructing(startingMap, item, currentLocation2, currentDirection2));
+
+    //}
+    //var resultList = await Task.WhenAll(tasks);
     #endregion
     WriteResult(6, 2, $"{resultList.Count(x => x)}");
 
@@ -138,7 +154,7 @@ async void Day6()
 async Task<bool> goingToLoopIfIAmObstructing(List<Coordinate> map, Coordinate iAmObstructing, Coordinate currentLocation, Direction currentDirection)
 {
     // Let's keep a list of visited locations
-    Console.WriteLine($"Checking location x:{iAmObstructing.X} y:{iAmObstructing.Y} ");
+    //Console.WriteLine($"Checking location x:{iAmObstructing.X} y:{iAmObstructing.Y} ");
     Coordinate nextLocation;
     var visitedLocations = new Dictionary<Coordinate, List<Direction>>();
     var insideMap = true;
