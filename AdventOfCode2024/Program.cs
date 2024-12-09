@@ -13,14 +13,78 @@ using static System.Runtime.InteropServices.JavaScript.JSType;
 //Day3();
 //await Day4();
 //Day5();
-await Day6();
-//Day7();
+//await Day6();
+Day7();
 
+void Day7()
+{
+    var input = ReadInput(7);
+    long result = 0;
+    foreach (var equation in input)
+    {
+        result += CanBeResolved(equation);
+    }
+    WriteResult(7, 1,$"{result}");
+}
 
+long CanBeResolved(string equation)
+{
+    var testValueAndNumbers = equation.Split(':', StringSplitOptions.RemoveEmptyEntries);
+    var testValue = long.Parse(testValueAndNumbers[0]);
+    var numbers = testValueAndNumbers[1].Split(' ', StringSplitOptions.RemoveEmptyEntries).Select(x => long.Parse(x)).ToList();
+    var value = numbers.First();
+    List<long> calculateOn = new List<long>();
+    calculateOn.Add(value);
+    numbers.Remove(value);
+    GetResults(numbers, calculateOn);
 
+    // 292: 11 6 16 20
+    // 11 + 6 + 16 + 20
+    // 11 * 6 + 16 + 20
+    // 11 + 6 * 16 + 20
+    // 11 + 6 + 16 * 20
+    // 11 * 6 * 16 + 20
+    // 11 * 6 * 16 * 20
+
+    // 11 + 6
+    // 11 * 6
+
+    // 17 + 16
+    // 17 * 17
+    // 66 + 16
+    // 66 * 16
+    if (calculateOn.Contains(testValue))
+        return testValue;
+    return 0;
+}
+
+List<long> GetResults(List<long> numbers, List<long> calculateOn)
+{
+    var numberToCalculateWith = numbers.First();
+    numbers.Remove(numberToCalculateWith);
+    var calculateOnStore = calculateOn.ToArray();
+    calculateOn.Clear();
+    foreach (var number in calculateOnStore)
+    {
+        calculateOn.Add(number * numberToCalculateWith);
+        calculateOn.Add(number + numberToCalculateWith);
+    }
+    
+    // do calculations
+    if (numbers.Count > 0)
+    {
+        return GetResults(numbers, calculateOn);
+    }
+    return numbers;
+}
+
+string[] ReadInput(int day)
+{
+    return File.ReadAllLines(@$"Inputs\Day{day}.txt");
+}
 async Task Day6()
 {
-    var input = File.ReadAllLines(@"Inputs\Day6.txt");
+    var input = ReadInput(6);
 
     var startingMap = new List<Coordinate>();
 
@@ -259,7 +323,7 @@ async Task<bool> goingToLoopIfIAmObstructing(List<Coordinate> map, Coordinate iA
 
 void Day5()
 {
-    var input = File.ReadAllLines(@"Inputs\Day5.txt");
+    var input = ReadInput(5);
 
     var creatingOrderingRules = true;
     List<(int First, int Second)> orderingRules = new();
@@ -415,7 +479,7 @@ async Task Day4()
 
     var normal = "\x1b[39m";
     var green = "\x1b[92m";
-    var input = File.ReadAllLines(@"Inputs\Day4.txt");
+    var input = ReadInput(4);
     var grid = new List<Coordinate>();
     for (int y = 0; y < input.Length; y++)
     {
@@ -609,11 +673,11 @@ void Day3()
     WriteResult(3, 2, $"{resultPart2}");
 }
 
-static void Day2()
+void Day2()
 {
     var resultPart1 = 0;
     var resultPart2 = 0;
-    var input = File.ReadAllLines(@"Inputs\Day2.txt");
+    var input = ReadInput(2);
     foreach (var item in input)
     {
         var values = item.Split(' ', StringSplitOptions.RemoveEmptyEntries).Select(x => int.Parse(x)).ToArray();
@@ -669,9 +733,9 @@ static int IsValidReport(int[] values, bool isIncreasing)
     return 1;
 }
 
-static void Day1()
+void Day1()
 {
-    var input = File.ReadAllLines(@"Inputs\Day1.txt");
+    var input = ReadInput(1);
     var list1 = new List<int>();
     var list2 = new List<int>();
     foreach (var line in input)
