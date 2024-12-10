@@ -2,6 +2,7 @@
 using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
+using System.IO;
 using System.IO.Pipes;
 using System.Numerics;
 using System.Text;
@@ -20,11 +21,45 @@ void Day7()
 {
     var input = ReadInput(7);
     long result = 0;
+    long result2 = 0;
     foreach (var equation in input)
     {
         result += CanBeResolved(equation);
+        result2 += CanBeResolved2(equation);
     }
-    WriteResult(7, 1,$"{result}");
+    WriteResult(7, 1, $"{result}");
+    WriteResult(7, 2, $"{result2}");
+}
+
+long CanBeResolved2(string equation)
+{
+    var testValueAndNumbers = equation.Split(':', StringSplitOptions.RemoveEmptyEntries);
+    var testValue = long.Parse(testValueAndNumbers[0]);
+    var numbers = testValueAndNumbers[1].Split(' ', StringSplitOptions.RemoveEmptyEntries).Select(x => long.Parse(x)).ToList();
+    var value = numbers.First();
+    List<long> calculateOn = new List<long>();
+    calculateOn.Add(value);
+    numbers.Remove(value);
+    GetResults2(numbers, calculateOn);
+
+    // 292: 11 6 16 20
+    // 11 + 6 + 16 + 20
+    // 11 * 6 + 16 + 20
+    // 11 + 6 * 16 + 20
+    // 11 + 6 + 16 * 20
+    // 11 * 6 * 16 + 20
+    // 11 * 6 * 16 * 20
+
+    // 11 + 6
+    // 11 * 6
+
+    // 17 + 16
+    // 17 * 17
+    // 66 + 16
+    // 66 * 16
+    if (calculateOn.Contains(testValue))
+        return testValue;
+    return 0;
 }
 
 long CanBeResolved(string equation)
@@ -34,6 +69,7 @@ long CanBeResolved(string equation)
     var numbers = testValueAndNumbers[1].Split(' ', StringSplitOptions.RemoveEmptyEntries).Select(x => long.Parse(x)).ToList();
     var value = numbers.First();
     List<long> calculateOn = new List<long>();
+
     calculateOn.Add(value);
     numbers.Remove(value);
     GetResults(numbers, calculateOn);
@@ -57,7 +93,27 @@ long CanBeResolved(string equation)
         return testValue;
     return 0;
 }
+List<long> GetResults2(List<long> numbers, List<long> calculateOn)
+{
+    var numberToCalculateWith = numbers.First();
+    numbers.Remove(numberToCalculateWith);
+    var calculateOnStore = calculateOn.ToArray();
+    calculateOn.Clear();
+    foreach (var number in calculateOnStore)
+    {
+        calculateOn.Add(number * numberToCalculateWith);
+        calculateOn.Add(number + numberToCalculateWith);
 
+        calculateOn.Add(long.Parse($"{number}{numberToCalculateWith}"));
+    }
+
+    // do calculations
+    if (numbers.Count > 0)
+    {
+        return GetResults2(numbers, calculateOn);
+    }
+    return numbers;
+}
 List<long> GetResults(List<long> numbers, List<long> calculateOn)
 {
     var numberToCalculateWith = numbers.First();
@@ -69,7 +125,7 @@ List<long> GetResults(List<long> numbers, List<long> calculateOn)
         calculateOn.Add(number * numberToCalculateWith);
         calculateOn.Add(number + numberToCalculateWith);
     }
-    
+
     // do calculations
     if (numbers.Count > 0)
     {
