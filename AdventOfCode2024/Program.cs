@@ -15,7 +15,175 @@ using static System.Runtime.InteropServices.JavaScript.JSType;
 //await Day4();
 //Day5();
 //await Day6();
-Day7();
+//Day7();
+Day8();
+
+void Day8()
+{
+    var input = ReadInput(8);
+
+    var startingMap = new List<Coordinate>();
+
+    for (int y = 0; y < input.Length; y++)
+    {
+        var line = input[y];
+        for (int x = 0; x < line.Length; x++)
+        {
+            startingMap.Add(new Coordinate(x, y, line[x]));
+        }
+    }
+
+    foreach (var locationValue in startingMap.Where(l => Char.IsAsciiLetterOrDigit(l.Value)).GroupBy(l => l.Value).Select(l => l.Key))
+    {
+        var antennasSameFrequency = startingMap.Where(a => a.Value.Equals(locationValue)).ToList();
+        antennasSameFrequency.ForEach(x => x.HasAntinode = true);
+        // Start forming pairs
+        // a1 and a2
+        // a1 and a3
+        // a1 and a4
+        // a2 and a3
+        // a2 and a4
+        // a3 and a4
+        while (antennasSameFrequency.Count > 1)
+        {
+            var checkingAntenna = antennasSameFrequency.First();
+            antennasSameFrequency.Remove(checkingAntenna);
+            foreach (var antenna in antennasSameFrequency)
+            {
+                // Detect the location of the 2 antinodes, if they are on the map enable has antinode
+                // x8 y1 x5 y2
+                // x8 y1 x7 y3
+                // x8 y1 x4 y4
+                // x5 y2 x7 y3
+                // x5 y2 x4 y4
+                // x7 y3 x4 y4
+
+                var differenceX = Math.Abs(checkingAntenna.X - antenna.X);
+                var differenceY = Math.Abs(checkingAntenna.Y - antenna.Y);
+                Coordinate upperAntiNode;
+                Coordinate lowerAntiNode;
+                // Upper antinode can either be on the left or on the right or directly above
+                // Directly above
+                //if (checkingAntenna.X == antenna.X)
+                //{
+                //    upperAntiNode = GetAntiNode(startingMap, checkingAntenna.X, checkingAntenna.Y - differenceY);
+                //    lowerAntiNode = GetAntiNode(startingMap, checkingAntenna.X, antenna.Y + differenceY);
+                //}
+                // The upper antenna is on the right
+                //else 
+                if (checkingAntenna.X > antenna.X)
+                {
+                    upperAntiNode = GetAntiNode(startingMap, checkingAntenna.X + differenceX, checkingAntenna.Y - differenceY);
+                    GetUpperAntiNodesToEndOfMapUpperRight(startingMap, checkingAntenna, differenceX, differenceY);
+
+                    lowerAntiNode = GetAntiNode(startingMap, antenna.X - differenceX, antenna.Y + differenceY);
+                    GetLowerAntiNodesToEndOfMapUpperRight(startingMap, antenna, differenceX, differenceY);
+
+                }
+                // The upper is on the left
+                else if (antenna.X > checkingAntenna.X)
+                {
+                    upperAntiNode = GetAntiNode(startingMap, checkingAntenna.X - differenceX, checkingAntenna.Y - differenceY);
+                    GetUpperAntiNodesToEndOfMapUpperLeft(startingMap, antenna, differenceX, differenceY);
+
+                    lowerAntiNode = GetAntiNode(startingMap, antenna.X + differenceX, antenna.Y + differenceY);
+                    GetLowerAntiNodesToEndOfMapUpperLeft(startingMap, checkingAntenna, differenceX, differenceY);
+                }
+                else
+                    throw new Exception("Something weird is going on");
+                if (upperAntiNode != null)
+                    upperAntiNode.HasAntinodeOnly1 = true;
+
+
+
+                if (lowerAntiNode != null)
+                    lowerAntiNode.HasAntinodeOnly1 = true;
+
+            }
+        }
+
+
+    }
+    for (int y = 0; y < 12; y++)
+    {
+        var line = "";
+        for (int x = 0; x < 12; x++)
+        {
+            var location = startingMap.First(l => l.X == x && l.Y == y);
+            if (location.HasAntinode)
+                line += "#";
+            else
+                line += location.Value;
+
+        }
+        Console.WriteLine(line);
+    }
+    WriteResult(8, 1, $"{startingMap.Count(l => l.HasAntinodeOnly1)}");
+    WriteResult(8, 2, $"{startingMap.Count(l => l.HasAntinode)}");
+
+}
+
+void GetLowerAntiNodesToEndOfMapUpperRight(List<Coordinate> startingMap, Coordinate antenna, int differenceX, int differenceY)
+{
+    Coordinate nextAntiNode;
+    do
+    {
+        nextAntiNode = GetAntiNode(startingMap, antenna.X - differenceX, antenna.Y + differenceY);
+        if (nextAntiNode != null)
+        {
+            nextAntiNode.HasAntinode = true;
+            antenna = nextAntiNode;
+        }
+    } while (nextAntiNode != null);
+}
+
+void GetUpperAntiNodesToEndOfMapUpperRight(List<Coordinate> startingMap, Coordinate checkingAntenna, int differenceX, int differenceY)
+{
+    Coordinate nextAntiNode;
+    do
+    {
+        nextAntiNode = GetAntiNode(startingMap, checkingAntenna.X + differenceX, checkingAntenna.Y - differenceY);
+        if (nextAntiNode != null)
+        {
+            nextAntiNode.HasAntinode = true;
+            checkingAntenna = nextAntiNode;
+        }
+    } while (nextAntiNode != null);
+}
+
+void GetLowerAntiNodesToEndOfMapUpperLeft(List<Coordinate> startingMap, Coordinate checkingAntenna, int differenceX, int differenceY)
+{
+    Coordinate nextAntiNode;
+    do
+    {
+        nextAntiNode = GetAntiNode(startingMap, checkingAntenna.X - differenceX, checkingAntenna.Y - differenceY);
+        if (nextAntiNode != null)
+        {
+            nextAntiNode.HasAntinode = true;
+            checkingAntenna = nextAntiNode;
+        }
+    } while (nextAntiNode != null);
+}
+
+void GetUpperAntiNodesToEndOfMapUpperLeft(List<Coordinate> startingMap, Coordinate antenna, int differenceX, int differenceY)
+{
+    Coordinate nextAntiNode;
+    do
+    {
+        nextAntiNode = GetAntiNode(startingMap, antenna.X + differenceX, antenna.Y + differenceY);
+        if (nextAntiNode != null)
+        {
+            nextAntiNode.HasAntinode = true;
+            antenna = nextAntiNode;
+        }
+    } while (nextAntiNode != null);
+}
+
+
+Coordinate GetAntiNode(List<Coordinate> startingMap, int x, int y)
+{
+    return startingMap.FirstOrDefault(l => l.X == x && l.Y == y);
+}
 
 void Day7()
 {
@@ -29,6 +197,7 @@ void Day7()
     }
     WriteResult(7, 1, $"{result}");
     WriteResult(7, 2, $"{result2}");
+
 }
 
 long CanBeResolved2(string equation)

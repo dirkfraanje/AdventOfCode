@@ -10,11 +10,12 @@ namespace AdventOfCode2024
     {
         public Coordinate(int x, int y, char value)
         {
-            X = x; Y = y; Value = value; //Color = color;
+            X = x; Y = y; Value = value; 
         }
         public int X; public int Y;
         public char Value;
         public bool Visited;
+        public bool HasAntinodeOnly1, HasAntinode;
         //public string Color;
     }
 }
