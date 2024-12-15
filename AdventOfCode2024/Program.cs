@@ -9,14 +9,129 @@ using System.Text;
 using System.Text.RegularExpressions;
 using static System.Runtime.InteropServices.JavaScript.JSType;
 
-//Day1();
-//Day2();
-//Day3();
-//await Day4();
-//Day5();
-//await Day6();
-//Day7();
-Day8();
+// Day1();
+// Day2();
+// Day3();
+// await Day4();
+// Day5();
+// await Day6();
+// Day7();
+// Day8();
+Day9();
+
+void Day9()
+{
+    var input = ReadInput(9)[0].Select(x => (int)char.GetNumericValue(x)).ToArray();
+    List<DiskFragment> fragments = new();
+    var count = input.Count();
+    var id = 0;
+    for (int i = 0; i < count; i++)
+    {
+        // Block size
+        var blockSize = input[i];
+        // Free space
+        int freeSpaceSize = 0;
+        i++;
+        if (i < count)
+            freeSpaceSize = input[i];
+        var ids = new List<int>();
+        // Default all to -1
+        for (int j = 0; j < blockSize + freeSpaceSize; j++)
+        {
+            ids.Add(-1);
+        }
+        var index = 0;
+        for (int j = 0; j < blockSize; j++)
+        {
+            ids[j] = id;
+        }
+
+
+        fragments.Add(new DiskFragment(ids, id));
+        id++;
+    }
+    // Start defragmenting
+    // Begin at the end
+    var fragmentsReversed = new List<DiskFragment>(fragments);
+    fragmentsReversed.Reverse();
+    foreach (var item in fragmentsReversed)
+    {
+        var enoughSpace = GetFragmentWithEnoughSpace(fragments, item);
+        // Enough space should not greater than the position of item because then it will move it from left to right and it should just move from right tot left
+        if (fragments.IndexOf(enoughSpace) >= fragments.IndexOf(item))
+            continue;
+        if (enoughSpace != null)
+        {
+            var lastIdCheckWith = item.FileIds.FirstOrDefault(x => x.Equals(item.OriginalId));
+            while (true)
+            {
+                var lastId = item.FileIds.FirstOrDefault(x => x.Equals(item.OriginalId));
+                if (lastId != lastIdCheckWith)
+                    break;
+                var firstFreeSpace = enoughSpace.FileIds.IndexOf(-1);
+
+                enoughSpace.FileIds[firstFreeSpace] = lastId;
+
+                var position = item.FileIds.LastIndexOf(lastId);
+                item.FileIds[position] = -1;
+
+            }
+
+        }
+    }
+
+    var result = fragments.SelectMany(x => x.FileIds).ToArray();
+    long checkSum = 0;
+    for (int i = 0; i < result.Count(); i++)
+    {
+        var before = checkSum;
+        if (result[i] != -1)
+            checkSum += i * result[i];
+        Console.WriteLine($"{before} += {i} * {result[i]} = {checkSum}");
+    }
+
+    WriteResult(9, 2, $"{checkSum}");
+
+    #region Part 1
+    // Start defragmenting
+    // Begin at the end     
+    //while (true)
+    //{
+    //    // as long as there is a fragment that has free space && has fragments after it also has free space keep going
+    //    var firstWithFreeSpace = fragments.FirstOrDefault(x => x.FileIds.Any(fileid => fileid.Equals(-1) && x.FileIds.Any(fileid => !fileid.Equals(-1))));
+    //    if (firstWithFreeSpace == null)
+    //        break;
+    //    var valueToCheckFrom2 = fragments.LastOrDefault(x => x != firstWithFreeSpace && x.FileIds.Any(fileid => fileid.Equals(-1) && x.FileIds.Any(fileid => !fileid.Equals(-1))));
+    //    if (valueToCheckFrom2 == null)
+    //        break;
+
+    //    var lastWithIds = fragments.LastOrDefault(x => x.FileIds.Any(id => id != -1));
+    //    var lastId = lastWithIds.FileIds.First(x => !x.Equals(-1));
+    //    //var lastPositionWithId = lastWithIds.FileIds.LastIndexOf(lastId);
+
+    //    var firstFreeSpace = firstWithFreeSpace.FileIds.IndexOf(-1);
+
+    //    firstWithFreeSpace.FileIds[firstFreeSpace] = lastId;
+    //    // set to -1 the one that is removed
+    //    var position = lastWithIds.FileIds.LastIndexOf(lastId);
+    //    lastWithIds.FileIds[position] = -1;
+    //}
+    //var result = fragments.SelectMany(x => x.FileIds.Where(x => !x.Equals(-1))).ToArray();
+    //long checkSum = 0;
+    //for (int i = 0; i < result.Count(); i++)
+    //{
+    //    checkSum += i * result[i];
+    //}
+
+    //WriteResult(9, 1, $"{checkSum}");
+    #endregion
+}
+
+DiskFragment GetFragmentWithEnoughSpace(List<DiskFragment> fragments, DiskFragment item)
+{
+    var needed = item.FileIds.Count(x => x.Equals(item.OriginalId));
+    return fragments.FirstOrDefault(x => x.FileIds.Count(i => i == -1) >= needed);
+}
 
 void Day8()
 {
