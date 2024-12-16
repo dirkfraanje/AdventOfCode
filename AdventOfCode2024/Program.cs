@@ -17,7 +17,42 @@ using static System.Runtime.InteropServices.JavaScript.JSType;
 // await Day6();
 // Day7();
 // Day8();
-Day9();
+// Day9();
+Day10();
+
+void Day10()
+{
+    var map = new List<TrailCoordinate>();
+    var input = ReadInput(10);
+    // Create map
+    for (int y = 0; y < input.Length; y++)
+    {
+        var line = input[y];
+        for (int x = 0; x < line.Length; x++)
+        {
+            map.Add(new TrailCoordinate(x, y, (int)char.GetNumericValue(line[x]), map));
+        }
+    }
+    //      10..9..
+    //      2...8..
+    //      3...7..
+    //      4567654
+    //      ...8..3
+    //      ...9..2
+    //      .....01
+
+    // Top has 1
+    // below 2
+    // Count trailheads
+    foreach (var trailHead in map.Where(x => x.Height == 0))
+    {
+        trailHead.EndsItCanReach(trailHead);
+    }
+
+
+    WriteResult(10, 1, $"{map.Sum(t => t.ReachedBy.Count)}");
+    WriteResult(10, 2, $"{map.Sum(t => t.ReachedByTotal)}");
+}
 
 void Day9()
 {
