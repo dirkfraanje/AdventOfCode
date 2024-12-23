@@ -18,7 +18,59 @@ using static System.Runtime.InteropServices.JavaScript.JSType;
 // Day7();
 // Day8();
 // Day9();
-Day10();
+// Day10();
+Day11();
+
+void Day11()
+{
+    const int times = 25;
+    // 42
+    Dictionary<int, long> itemTimes = new();
+    long finalResult = 0;
+    SubDay11(times, AddToDay11, itemTimes);
+
+    void AddToDay11(long subresult)
+    {
+        finalResult += subresult;
+    }
+    WriteResult(11, 1, $"{finalResult}");
+}
+
+void SubDay11(int times, Action<long> addToDay11, Dictionary<int, long> itemTimes)
+{
+    var input = "125 17".Split(' ', StringSplitOptions.RemoveEmptyEntries).Select(x => long.Parse(x)).ToList();
+
+    foreach (var x in input)
+    {
+        SetResult(x, times, addToDay11, itemTimes);
+    }
+}
+
+void SetResult(long item, int times, Action<long> addToDay11, Dictionary<int, long> itemTimes)
+{
+    if (times <= 0)
+    {
+        addToDay11(1);
+        return;
+    }
+
+    if (item == 0)
+        SetResult(1, times - 1, addToDay11, itemTimes);
+
+
+    else if ($"{item}".Count() % 2 == 0)
+    {
+        var numberOfDigits = $"{item}".Count();
+
+        var value1 = long.Parse($"{item}".Substring(0, numberOfDigits / 2));
+        SetResult(value1, times - 1, addToDay11, itemTimes);
+        var value2 = long.Parse($"{item}".Substring($"{item}".Count() / 2));
+        SetResult(value2, times - 1, addToDay11, itemTimes);
+    }
+    else
+        SetResult(item * 2024, times - 1, addToDay11, itemTimes);
+}
+
 
 void Day10()
 {
