@@ -19,56 +19,57 @@ using static System.Runtime.InteropServices.JavaScript.JSType;
 // Day8();
 // Day9();
 // Day10();
-Day11();
-
-void Day11()
+Day11(1, 25);
+Day11(2, 75);
+void Day11(int part, int times)
 {
-    const int times = 25;
-    // 42
-    Dictionary<int, long> itemTimes = new();
     long finalResult = 0;
-    SubDay11(times, AddToDay11, itemTimes);
 
-    void AddToDay11(long subresult)
+
+    // Let's create a dictionary of tuple: 
+    Dictionary<(long zeroToNine, int timesLeft), long> calculationResult = new();
+    // Start from zero times
+    for (int timesLeft = 1; timesLeft < times; timesLeft++)
     {
-        finalResult += subresult;
+        for (int zeroToNine = 0; zeroToNine < 10; zeroToNine++)
+        {
+            // So get the amount of stones for each value from 0 to 9 
+            calculationResult.Add((zeroToNine, timesLeft), GetStones(zeroToNine, timesLeft, calculationResult));
+        }
     }
-    WriteResult(11, 1, $"{finalResult}");
-}
-
-void SubDay11(int times, Action<long> addToDay11, Dictionary<int, long> itemTimes)
-{
     var input = "125 17".Split(' ', StringSplitOptions.RemoveEmptyEntries).Select(x => long.Parse(x)).ToList();
-
     foreach (var x in input)
     {
-        SetResult(x, times, addToDay11, itemTimes);
+        finalResult += GetStones(x, times, calculationResult);
     }
+
+    WriteResult(11, part, $"{finalResult}");
 }
 
-void SetResult(long item, int times, Action<long> addToDay11, Dictionary<int, long> itemTimes)
+long GetStones(long item, int timesLeft, Dictionary<(long zeroToNine, int timesLeft), long> calculationResult)
 {
-    if (times <= 0)
+    if (timesLeft <= 0)
+        return 1;
+    (bool keyExists, long value) = calculationResult.TryGetValue((item, timesLeft), out var val) ? (true, val) : (false, val);
+    if (keyExists)
     {
-        addToDay11(1);
-        return;
+        return value;
     }
-
     if (item == 0)
-        SetResult(1, times - 1, addToDay11, itemTimes);
-
+        return GetStones(1, timesLeft - 1, calculationResult);
 
     else if ($"{item}".Count() % 2 == 0)
     {
         var numberOfDigits = $"{item}".Count();
-
+        long subResult = 0;
         var value1 = long.Parse($"{item}".Substring(0, numberOfDigits / 2));
-        SetResult(value1, times - 1, addToDay11, itemTimes);
         var value2 = long.Parse($"{item}".Substring($"{item}".Count() / 2));
-        SetResult(value2, times - 1, addToDay11, itemTimes);
+        subResult += GetStones(value1, timesLeft - 1, calculationResult);
+        subResult += GetStones(value2, timesLeft - 1, calculationResult);
+        return subResult;
     }
     else
-        SetResult(item * 2024, times - 1, addToDay11, itemTimes);
+        return GetStones(item * 2024, timesLeft - 1, calculationResult);
 }
 
 
