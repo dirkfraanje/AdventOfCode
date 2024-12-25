@@ -19,8 +19,31 @@ using static System.Runtime.InteropServices.JavaScript.JSType;
 // Day8();
 // Day9();
 // Day10();
-Day11(1, 25);
-Day11(2, 75);
+//Day11(1, 25);
+//Day11(2, 75);
+Day12();
+
+void Day12()
+{
+    var input = ReadInput(12);
+
+    for (int y = 0; y < input.Length; y++)
+    {
+        var line = input[y];
+        for (int x = 0; x < line.Length; x++)
+        {
+            Garden.GardenPlots.Add(new GardenPlot(x, y, line[x]));
+        }
+    }
+    Garden.SetRegions();
+    var result1 = Garden.GetFencingPricePart1();
+    WriteResult(12, 1, $"{result1}");
+
+    var result2 = Garden.GetFencingPricePart2();
+    WriteResult(12, 2, $"{result2}");
+}
+
+
 void Day11(int part, int times)
 {
     long finalResult = 0;
