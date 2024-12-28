@@ -1,5 +1,6 @@
 ﻿using AdventOfCode2024;
 using System.Collections.Concurrent;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.IO;
@@ -19,9 +20,113 @@ using static System.Runtime.InteropServices.JavaScript.JSType;
 // Day8();
 // Day9();
 // Day10();
-//Day11(1, 25);
-//Day11(2, 75);
-Day12();
+// Day11(1, 25);
+// Day11(2, 75);
+// Day12();
+Day13(1);
+Day13(2);
+
+void Day13(int part)
+{
+    var input = ReadInput(13);
+    long result = 0;
+    for (int i = 0; i < input.Length; i++)
+    {
+        var buttonAValues = Regex.Matches(input[i], "\\d+");
+        var buttonAx = int.Parse(buttonAValues[0].Value);
+        var buttonAy = int.Parse(buttonAValues[1].Value);
+        i++;
+        var buttonBValues = Regex.Matches(input[i], "\\d+");
+        var buttonBx = int.Parse(buttonBValues[0].Value);
+        var buttonBy = int.Parse(buttonBValues[1].Value);
+        i++;
+        var prizeLocation = Regex.Matches(input[i], "\\d+");
+        var prizeXlocation = long.Parse(prizeLocation[0].Value);
+        var prizeYlocation = long.Parse(prizeLocation[1].Value);
+        i++;
+        if (part == 2)
+        {
+            prizeXlocation = 10000000000000 + prizeXlocation;
+            prizeYlocation = 10000000000000 + prizeYlocation;
+        }
+        //31730183588883 to l0w
+        //10000000018641 x
+        //10000000010279 yloc
+        //var subResult = GetCheapestTokenAmount(buttonAx, buttonBx, prizeXlocation, buttonAy, buttonBy, prizeYlocation);
+        //if (subResult != -1)
+        //result += subResult;
+        var subResult2 = SolveEquation(part, buttonAx, buttonBx, buttonAy, buttonBy, prizeXlocation, prizeYlocation);
+        if (subResult2 != 0)
+            result += subResult2;
+
+    }
+    WriteResult(13, part, $"{result}");
+}
+
+long SolveEquation(int part, int buttonAx, int buttonBx, int buttonAy, int buttonBy, long prizeXlocation, long prizeYlocation)
+{
+    var calculation1 = buttonBy * prizeXlocation;
+    var subCalculation1 = buttonBy * buttonAx;
+    var subCalculation2 = buttonBy * buttonBx;
+
+    var calculation2 = buttonBx * prizeYlocation;
+    var subCalculation2_1 = buttonBx * buttonAy;
+    var subCalculation2_2 = buttonBx * buttonBy;
+
+    var phase3_1 = calculation1 - calculation2;
+    var phase3_2 = subCalculation1 - subCalculation2_1;
+    var aResult = phase3_1 / phase3_2;
+    var bResult = (prizeXlocation - (aResult * buttonAx)) / buttonBx;
+    if (part == 1 && (aResult > 100 || bResult > 100))
+        return 0;
+    if ((aResult * buttonAy) + (bResult * buttonBy) == prizeYlocation)
+        return (aResult * 3) + bResult;
+    return 0;
+}
+
+long GetCheapestTokenAmount(int aXincrease, int bXincrease, long prizeXlocation, int aYincrease, int bYincrease, long prizeYlocation)
+{
+
+    long xResult = -1;
+    for (long stepsA = 0; stepsA < 100; stepsA++)
+    {
+        //(because 80*94 + 40*22 = 8400)
+        long aXresult = stepsA * aXincrease;
+        long aYresult = stepsA * aYincrease;
+        if (aXresult > prizeXlocation || aYresult > prizeYlocation)
+            continue;
+        if (BGetsToDesiredLocation(bXincrease, prizeXlocation - aXresult, out long stepsB))
+        {
+            // Does Y also get to the desired location?
+            var bYresult = stepsB * bYincrease;
+            var result = aYresult + bYresult;
+            if (result != prizeYlocation)
+                continue;
+            // Get the token amount: stepsA * 3 and steps B (* 1, so nothing to calculate)
+            var tokensNeeded = (stepsA * 3) + stepsB;
+            if (xResult == -1 || tokensNeeded < xResult)
+            {
+                return tokensNeeded;
+            }
+        }
+
+    }
+    return xResult;
+}
+
+bool BGetsToDesiredLocation(int bIncrease, long prizeLocationRemaining, out long bResult)
+{
+    var subResult = prizeLocationRemaining / bIncrease;
+    if (subResult % 1 != 0)
+    {
+        bResult = 0;
+        return false;
+    }
+
+    bResult = (long)subResult;
+    return true;
+
+}
 
 void Day12()
 {
