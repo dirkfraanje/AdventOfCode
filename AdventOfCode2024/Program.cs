@@ -23,9 +23,97 @@ using static System.Runtime.InteropServices.JavaScript.JSType;
 // Day11(1, 25);
 // Day11(2, 75);
 // Day12();
-Day13(1);
-Day13(2);
+// Day13(1);
+// Day13(2);
+// Day14Part1(7 ,11);
+Day14Part2(101, 103);
+void Day14Part2(int totalX , int totalY)
+{
+    
+    var input = ReadInput(14);
+    List<Robot> robots = new();
+    //p=0,4 v=3,-3
+    foreach (var robotValues in input)
+    {
+        var values = Regex.Matches(robotValues, @"-?\d+").Select(x => int.Parse(x.Value)).ToArray();
+        var robot = new Robot(values[0], values[1], values[2], values[3]);
+        robots.Add(robot);
 
+    }
+    var i = 0;
+    while (true)
+    {
+        foreach (var robot in robots)
+        {
+            robot.SetFinalPosition(1, totalX, totalY);
+        }
+        //if (i > 7035)
+        //{
+        //    Console.Clear();
+        if (DisplaysChristmasTree(robots, totalX, totalY))
+        {
+            break;
+        }
+        if (i > 100000)
+        {
+            Console.WriteLine();
+            Console.WriteLine("Your christmas tree is possibly a bit more to the top, bottom, left or right, can't find it...");
+            Console.WriteLine();
+            break;
+        }
+            
+        //Console.WriteLine(i);
+        //Console.ReadLine();
+        //}
+
+        i++;
+    }
+
+    //1933440 TO LOW
+    WriteResult(14, 2, i.ToString());
+}
+
+bool DisplaysChristmasTree(List<Robot> robots, int totalX, int totalY)
+{
+    if (!(robots.Where(r => r.Y == totalY / 2 && r.X >= 30 && r.X <= 40).Count() >= 8))
+        return false;
+    for (int y = 0; y < totalY; y++)
+    {
+        var lineBuilder = new StringBuilder();
+        for (int x = 0; x < totalX; x++)
+        {
+            var value = ' ';
+            if (robots.Any(r => r.X == x && r.Y == y))
+                value = 'X';
+            lineBuilder.Append(value);
+        }
+        Console.WriteLine(y + ": " + lineBuilder.ToString());
+    }
+    return true;
+}
+void Day14Part1(int totalX, int totalY)
+{
+    var input = ReadInput(14);
+    List<Robot> robots = new();
+    //p=0,4 v=3,-3
+    foreach (var robotValues in input)
+    {
+        var values = Regex.Matches(robotValues, @"-?\d+").Select(x => int.Parse(x.Value)).ToArray();
+        var robot = new Robot(values[0], values[1], values[2], values[3]);
+        robots.Add(robot);
+        robot.SetFinalPosition(100, totalX, totalY);
+    }
+    var xHalf = totalX / 2;
+    var yHalf = totalY / 2;
+    var q1 = robots.Where(r => r.X >= 0 && r.X < xHalf && r.Y >= 0 && r.Y < yHalf).Count();
+    var q2 = robots.Where(r => r.X > xHalf && r.Y >= 0 && r.Y < yHalf).Count();
+
+    var q3 = robots.Where(r => r.X >= 0 && r.X < xHalf && r.Y > yHalf).Count();
+    var q4 = robots.Where(r => r.X > xHalf && r.Y > yHalf).Count();
+
+    //1933440 TO LOW
+    WriteResult(14, 1, (q1 * q2 * q3 * q4).ToString());
+}
 void Day13(int part)
 {
     var input = ReadInput(13);
