@@ -26,10 +26,449 @@ using static System.Runtime.InteropServices.JavaScript.JSType;
 // Day13(1);
 // Day13(2);
 // Day14Part1(7 ,11);
-Day14Part2(101, 103);
-void Day14Part2(int totalX , int totalY)
+// Day14Part2(101, 103);
+Day15Part1();
+Day15Part2();
+void Day15Part2()
 {
+    var input = ReadInput(15);
+    var warehouse = GenerateWarehouse2(input);
+    var steps = GenerateSteps(input);
+    var next = warehouse.First(x => x.Value == '@');
+    DisplayLocations(warehouse);
+    foreach (var step in steps)
+    {
+        next.Value = '.';
+        switch (step)
+        {
+            case Direction.North:
+                next = GetNextAndMoveBoxes2(warehouse, next, Direction.North, next.X, next.Y - 1);
+                break;
+            case Direction.East:
+                next = GetNextAndMoveBoxes2(warehouse, next, Direction.East, next.X + 1, next.Y);
+                break;
+            case Direction.South:
+                next = GetNextAndMoveBoxes2(warehouse, next, Direction.South, next.X, next.Y + 1);
+                break;
+            case Direction.West:
+                next = GetNextAndMoveBoxes2(warehouse, next, Direction.West, next.X - 1, next.Y);
+                break;
+            default:
+                break;
+        }
+        next.Value = '@';
+        //Console.WriteLine();
+        //Console.WriteLine(step);
+        //DisplayLocations(warehouse);
+    }
     
+    var result = 0;
+    foreach (var location in warehouse)
+    {
+        if (location.Value == '[')
+        {
+            result += (location.Y * 100) + location.X;
+        }
+    }
+    WriteResult(15, 2, result.ToString());
+}
+
+void Day15Part1()
+{
+    var input = ReadInput(15);
+    var warehouse = GenerateWarehouse(input);
+    var steps = GenerateSteps(input);
+    var next = warehouse.First(x => x.Value == '@');
+    foreach (var step in steps)
+    {
+        next.Value = '.';
+        switch (step)
+        {
+            case Direction.North:
+                next = GetNextAndMoveBoxes(warehouse, next, Direction.North, next.X, next.Y - 1);
+                break;
+            case Direction.East:
+                next = GetNextAndMoveBoxes(warehouse, next, Direction.East, next.X + 1, next.Y);
+                break;
+            case Direction.South:
+                next = GetNextAndMoveBoxes(warehouse, next, Direction.South, next.X, next.Y + 1);
+                break;
+            case Direction.West:
+                next = GetNextAndMoveBoxes(warehouse, next, Direction.West, next.X - 1, next.Y);
+                break;
+            default:
+                break;
+        }
+        next.Value = '@';
+        //Console.WriteLine("Move " + step);
+
+        //Console.WriteLine();
+    }
+    var result = 0;
+    foreach (var location in warehouse)
+    {
+        if (location.Value == 'O')
+        {
+            result += (location.Y * 100) + location.X;
+        }
+    }
+    WriteResult(15, 1, result.ToString());
+}
+WarehouseLocation GetNextAndMoveBoxes2(IEnumerable<WarehouseLocation> warehouse, WarehouseLocation originating, Direction direction, int x, int y)
+{
+    var result = warehouse.First(l => l.X == x && l.Y == y);
+    // Check if it bumps into a wall
+    if (result.Value.Equals('#'))
+        return originating;
+    if (result.Value.Equals('[') || result.Value.Equals(']'))
+    {
+        if (!BoxesMoved2(warehouse, originating, result, direction))
+            return originating;
+    }
+
+    return result;
+}
+bool BoxesMoved2(IEnumerable<WarehouseLocation> warehouse, WarehouseLocation originating, WarehouseLocation result, Direction direction)
+{
+    var locationsInvolved = new List<WarehouseLocation>();
+    var combiningLocation = GetCombiningLocation(warehouse, result);
+    var aboveOrBelowLocations = new List<WarehouseLocation>() { result, combiningLocation };
+    // I bumped into a box, if there is an empty location between the box and the wall, the boxes in between move all 1 step
+    switch (direction)
+    {
+        case Direction.North:
+            // Search to the top for the first empty location
+            // First get the location on which the other half is located
+            locationsInvolved.AddRange(aboveOrBelowLocations);
+            // Start going up until a wall or empty location is found
+            for (int y = result.Y; y >= 0; y--)
+            {
+                aboveOrBelowLocations = GetNextVerticalBoxLocations(warehouse, aboveOrBelowLocations, Direction.North);
+
+                if (aboveOrBelowLocations.Any(l => l.Value == '#'))
+                    return false;
+                if (aboveOrBelowLocations.All(l => l.Value == '.'))
+                {
+
+                    // All locations involved need to be moved up
+                    Move2Locations(warehouse, locationsInvolved, Direction.North);
+                    result.Value = '.';
+                    combiningLocation.Value = '.';
+                    return true;
+                }
+                else
+                    locationsInvolved.AddRange(aboveOrBelowLocations);
+
+            }
+            break;
+        case Direction.South:
+            // Search to the bottom for the first empty location
+            // First get the location on which the other half is located
+            locationsInvolved.AddRange(aboveOrBelowLocations);
+            // Start going up until a wall or empty location is found
+            for (int y = result.Y; y >= 0; y--)
+            {
+                aboveOrBelowLocations = GetNextVerticalBoxLocations(warehouse, aboveOrBelowLocations, Direction.South);
+
+                if (aboveOrBelowLocations.Any(l => l.Value == '#'))
+                    return false;
+                if (aboveOrBelowLocations.All(l => l.Value == '.'))
+                {
+
+                    // All locations involved need to be moved up
+                    Move2Locations(warehouse, locationsInvolved, Direction.South);
+                    result.Value = '.';
+                    combiningLocation.Value = '.';
+                    return true;
+                }
+                else
+                    locationsInvolved.AddRange(aboveOrBelowLocations);
+
+            }
+            break;
+        case Direction.East:
+            // Search to the right for the first empty location
+            for (int x = result.X + 1; x <= warehouse.Max(l => l.X); x++)
+            {
+                var nextLocation = warehouse.FirstOrDefault(l => l.X == x && l.Y == result.Y);
+                if (nextLocation.Value == '#')
+                    return false;
+                if (nextLocation.Value == '.')
+                {
+                    result.Value = '.';
+                    nextLocation.Value = ']';
+                    foreach (var item in locationsInvolved)
+                    {
+                        item.FlipBoxSide();
+                    }
+                    return true;
+                }
+                else
+                    locationsInvolved.Add(nextLocation);
+            }
+            break;
+        case Direction.West:
+            // Search to the left for the first empty location
+            for (int x = result.X - 1; x >= 0; x--)
+            {
+                var nextLocation = warehouse.FirstOrDefault(l => l.X == x && l.Y == result.Y);
+                if (nextLocation.Value == '#')
+                    return false;
+                if (nextLocation.Value == '.')
+                {
+                    // By setting result.Value to . and nextlocation.value to O i moved the whole line
+                    result.Value = '.';
+                    nextLocation.Value = '[';
+                    foreach (var item in locationsInvolved)
+                    {
+                        item.FlipBoxSide();
+                    }
+                    return true;
+                }
+                else
+                {
+                    locationsInvolved.Add(nextLocation);
+                }
+            }
+            break;
+        default:
+            break;
+    }
+    return false;
+
+}
+
+List<WarehouseLocation> GetNextVerticalBoxLocations(IEnumerable<WarehouseLocation> warehouse, List<WarehouseLocation> checkingLocations, Direction direction)
+{
+    var result = new List<WarehouseLocation>();
+    foreach (var item in checkingLocations)
+    {
+        var y = direction == Direction.North ? item.Y - 1 : item.Y + 1;
+        var locationAbove = warehouse.First(l => l.X == item.X && l.Y == y);
+        if (locationAbove.Value == '.' || result.Contains(locationAbove))
+            continue;
+        result.Add(locationAbove);
+        if(locationAbove.Value == '[' || locationAbove.Value == ']')
+        {
+            var combiningLocation = GetCombiningLocation(warehouse, locationAbove);
+            // If the combining location is not in the checking list, get it from the warehouse
+            if (!checkingLocations.Contains(combiningLocation))
+                result.Add(combiningLocation);
+        }
+        
+    }
+    return result;
+}
+
+WarehouseLocation GetCombiningLocation(IEnumerable<WarehouseLocation> warehouse, WarehouseLocation result)
+{
+    if (result.Value == '[')
+        return warehouse.First(l => l.Y == result.Y && l.X == result.X + 1);
+    else
+        return warehouse.First(l => l.Y == result.Y && l.X == result.X - 1);
+}
+
+void DisplayLocations(IEnumerable<WarehouseLocation> warehouse)
+{
+    for (int y = 0; y <= warehouse.Max(l => l.Y); y++)
+    {
+        var lineBuilder = new StringBuilder();
+        for (int x = 0; x <= warehouse.Max(l => l.X); x++)
+        {
+            lineBuilder.Append(warehouse.First(l => l.X == x && l.Y == y).Value);
+        }
+        Console.WriteLine(lineBuilder.ToString());
+    }
+}
+
+WarehouseLocation GetNextAndMoveBoxes(IEnumerable<WarehouseLocation> warehouse, WarehouseLocation originating, Direction direction, int x, int y)
+{
+    var result = warehouse.First(l => l.X == x && l.Y == y);
+    // Check if it bumps into a wall
+    if (result.Value.Equals('#'))
+        return originating;
+    if (result.Value.Equals('O'))
+    {
+        if (!BoxesMoved(warehouse, originating, result, direction))
+            return originating;
+    }
+
+    return result;
+}
+
+
+
+bool BoxesMoved(IEnumerable<WarehouseLocation> warehouse, WarehouseLocation originating, WarehouseLocation result, Direction direction)
+{
+
+    // I bumped into a box, if there is an empty location between the box and the wall, the boxes in between move all 1 step
+    switch (direction)
+    {
+        case Direction.North:
+            // Search to the top for the first empty location
+            for (int y = result.Y; y >= 0; y--)
+            {
+                var nextLocation = warehouse.FirstOrDefault(l => l.Y == y && l.X == result.X);
+                if (nextLocation.Value == '#')
+                    return false;
+                if (nextLocation.Value == '.')
+                {
+                    result.Value = '.';
+                    nextLocation.Value = 'O';
+                    return true;
+                }
+            }
+            break;
+        case Direction.East:
+            // Search to the right for the first empty location
+            for (int x = result.X; x <= warehouse.Max(l => l.X); x++)
+            {
+                var nextLocation = warehouse.FirstOrDefault(l => l.X == x && l.Y == result.Y);
+                if (nextLocation.Value == '#')
+                    return false;
+                if (nextLocation.Value == '.')
+                {
+                    result.Value = '.';
+                    nextLocation.Value = 'O';
+                    return true;
+                }
+            }
+            break;
+        case Direction.South:
+            // Search to the bottom for the first empty location
+            for (int y = result.Y; y <= warehouse.Max(l => l.Y); y++)
+            {
+                var nextLocation = warehouse.FirstOrDefault(l => l.Y == y && l.X == result.X);
+                if (nextLocation.Value == '#')
+                    return false;
+                if (nextLocation.Value == '.')
+                {
+                    result.Value = '.';
+                    nextLocation.Value = 'O';
+                    return true;
+                }
+            }
+            break;
+        case Direction.West:
+            // Search to the left for the first empty location
+            for (int x = result.X; x >= 0; x--)
+            {
+                var nextLocation = warehouse.FirstOrDefault(l => l.X == x && l.Y == result.Y);
+                if (nextLocation.Value == '#')
+                    return false;
+                if (nextLocation.Value == '.')
+                {
+                    result.Value = '.';
+                    nextLocation.Value = 'O';
+                    return true;
+                }
+            }
+            break;
+        default:
+            break;
+    }
+    return false;
+
+}
+
+List<Direction> GenerateSteps(string[] input)
+{
+    var result = new List<Direction>();
+    bool startStepGeneration = false;
+    foreach (var item in input)
+    {
+        if (string.IsNullOrWhiteSpace(item))
+        {
+            startStepGeneration = true;
+            continue;
+        }
+        if (!startStepGeneration)
+            continue;
+        for (int i = 0; i < item.Length; i++)
+        {
+            result.Add(GetDirection(item[i]));
+        }
+    }
+    return result;
+}
+
+Direction GetDirection(char v)
+{
+    switch (v)
+    {
+        case '>':
+            return Direction.East;
+        case '<':
+            return Direction.West;
+        case 'v':
+            return Direction.South;
+        case '^':
+            return Direction.North;
+        default:
+            throw new NotImplementedException();
+    }
+}
+IEnumerable<WarehouseLocation> GenerateWarehouse2(string[] input)
+{
+    var result = new List<WarehouseLocation>();
+    var y = 0;
+    string line;
+    do
+    {
+        line = input[y];
+        var lcounter = 1;
+        for (int l = 0; l < line.Length; l++)
+        {
+            var value = line[l];
+            if (value == 'O')
+                value = '[';
+            result.Add(new WarehouseLocation(l * 2, y, value));
+
+            switch (value)
+            {
+                case '#':
+                    result.Add(new WarehouseLocation(lcounter, y, '#'));
+                    break;
+                case '@':
+                    result.Add(new WarehouseLocation(lcounter, y, '.'));
+                    break;
+                case '.':
+                    result.Add(new WarehouseLocation(lcounter, y, '.'));
+                    break;
+                case '[':
+                    result.Add(new WarehouseLocation(lcounter, y, ']'));
+                    break;
+                default:
+                    throw new NotImplementedException();
+            }
+            lcounter += 2;
+        }
+        y++;
+    }
+    while (!string.IsNullOrWhiteSpace(line));
+    return result;
+}
+IEnumerable<WarehouseLocation> GenerateWarehouse(string[] input)
+{
+    var result = new List<WarehouseLocation>();
+    var y = 0;
+    string line;
+    do
+    {
+        line = input[y];
+        for (int l = 0; l < line.Length; l++)
+        {
+            result.Add(new WarehouseLocation(l, y, line[l]));
+        }
+        y++;
+    }
+    while (!string.IsNullOrWhiteSpace(line));
+    return result;
+}
+
+void Day14Part2(int totalX, int totalY)
+{
+
     var input = ReadInput(14);
     List<Robot> robots = new();
     //p=0,4 v=3,-3
@@ -61,7 +500,7 @@ void Day14Part2(int totalX , int totalY)
             Console.WriteLine();
             break;
         }
-            
+
         //Console.WriteLine(i);
         //Console.ReadLine();
         //}
@@ -75,6 +514,7 @@ void Day14Part2(int totalX , int totalY)
 
 bool DisplaysChristmasTree(List<Robot> robots, int totalX, int totalY)
 {
+
     if (!(robots.Where(r => r.Y == totalY / 2 && r.X >= 30 && r.X <= 40).Count() >= 8))
         return false;
     for (int y = 0; y < totalY; y++)
@@ -1439,4 +1879,16 @@ bool CheckLooping(Direction currentDirection, Coordinate nextLocation, Dictionar
 
     }
     return false;
+}
+
+static void Move2Locations(IEnumerable<WarehouseLocation> warehouse, List<WarehouseLocation> locationsInvolved, Direction direction)
+{
+    var orderedLocations = direction == Direction.North ?  locationsInvolved.OrderBy(l => l.Y) : locationsInvolved.OrderByDescending(l => l.Y);
+
+    foreach (var item in orderedLocations)
+    {
+        var y = direction == Direction.North ? item.Y - 1 : item.Y + 1;
+        warehouse.First(l => l.X == item.X && l.Y == y).Value = item.Value;
+        item.Value = '.';
+    }
 }
