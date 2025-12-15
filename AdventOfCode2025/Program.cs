@@ -1,2 +1,5 @@
-﻿// See https://aka.ms/new-console-template for more information
-Console.WriteLine("Hello, World!");
+﻿using AdventOfCode2025;
+
+Console.WriteLine("AoC 2025:");
+Day1.Result(false);
+Day1.Result(true);
