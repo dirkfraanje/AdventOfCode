@@ -26,7 +26,7 @@ namespace AdventOfCode2025
                         // If pointer + steps is 0 we have alread counted this at if(pointer == 0)
                         if (pointer + steps != 0 && includeRotations)
                         {
-                            Console.WriteLine(line);
+                            //Console.WriteLine(line);
                             password++;
                         }
 
@@ -37,7 +37,7 @@ namespace AdventOfCode2025
                     {
                         if (pointer + steps != 0 && includeRotations)
                         {
-                            Console.WriteLine(line);
+                            //Console.WriteLine(line);
                             password++;
                         }
 
@@ -53,7 +53,7 @@ namespace AdventOfCode2025
                     {
                         if (pointer != 100 && includeRotations)
                         {
-                            Console.WriteLine(line);
+                            //Console.WriteLine(line);
                             password++;
                         }
                         // Still not in range
@@ -64,12 +64,13 @@ namespace AdventOfCode2025
                     throw new Exception($"Unknown direction: {direction}");
                 if (pointer == 0)
                 {
-                    Console.WriteLine(line);
+                    //Console.WriteLine(line);
                     password++;
                 }
 
             }
-            Console.WriteLine($"Result: {password}");
+            var part = includeRotations ? 2 : 1;
+            Console.WriteLine($"Result part{part}:  {password}");
         }
     }
 }
